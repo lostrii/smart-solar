@@ -1022,105 +1022,103 @@
                         )}
 
                         {/* Government Subsidy */}
-                        {!hideSolarTiles && (
-                            <div className="mt-14">
-                                <div className="bg-white p-8 md:p-10 rounded-3xl border border-gray-100 hover:shadow-lg transition-all">
-                                    <div className="flex flex-col lg:flex-row gap-10">
-                                        <div className="flex-1">
-                                            <div className="flex items-start gap-4 mb-4">
-                                                <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center flex-shrink-0">
-                                                    <Icon name="badge-check" size={34} className="text-primary" />
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-3xl font-extrabold text-dark">Government Solar Subsidy</h3>
-                                                    <p className="text-gray-600 mt-2">
-                                                        Reduce your upfront cost with government-approved solar subsidies. We guide you end-to-end — eligibility check, documents, and submission.
-                                                    </p>
-                                                    <p className="mt-3 font-bold text-dark">
-                                                        Our dedicated team will help you get the subsidy without any hassle.
-                                                    </p>
-                                                </div>
+                        <div className="mt-14">
+                            <div className="bg-white p-8 md:p-10 rounded-3xl border border-gray-100 hover:shadow-lg transition-all">
+                                <div className="flex flex-col lg:flex-row gap-10">
+                                    <div className="flex-1">
+                                        <div className="flex items-start gap-4 mb-4">
+                                            <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                                                <Icon name="badge-check" size={34} className="text-primary" />
                                             </div>
-
-                                            <div className="mt-7 overflow-hidden rounded-2xl border border-gray-100">
-                                                <table className="w-full text-left border-collapse">
-                                                    <thead>
-                                                        <tr className="bg-gray-50 text-gray-600 text-sm">
-                                                            <th className="px-5 py-4 font-bold">System Size</th>
-                                                            <th className="px-5 py-4 font-bold">Subsidy Amount</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody className="divide-y divide-gray-100">
-                                                        {[
-                                                            ['1 kW', '₹45,000'],
-                                                            ['2 kW', '₹90,000'],
-                                                            ['3 kW or above', '₹1,08,000'],
-                                                        ].map(([k, v], idx) => (
-                                                            <tr key={idx} className="hover:bg-gray-50">
-                                                                <td className="px-5 py-4 font-semibold text-dark">{k}</td>
-                                                                <td className="px-5 py-4 text-gray-700">{v}</td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-
-                                            <div className="mt-7 flex flex-col sm:flex-row gap-3">
-                                                <a
-                                                    href={`https://wa.me/918400000810?text=${encodeURIComponent("Hi Smart Solar, I want to check my eligibility for Government Solar Subsidy. Please guide me.")}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="bg-primary hover:bg-orange-600 text-white px-8 py-4 rounded-xl font-extrabold text-lg transition-all shadow-lg shadow-primary/30 hover:-translate-y-0.5 text-center"
-                                                >
-                                                    Check Eligibility
-                                                </a>
-                                                <button
-                                                    onClick={() => {
-                                                        const el = document.getElementById('contact');
-                                                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                                    }}
-                                                    className="bg-white border-2 border-gray-200 hover:border-primary text-dark hover:text-primary px-8 py-4 rounded-xl font-extrabold text-lg transition-all"
-                                                >
-                                                    Apply Now
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="lg:w-[420px]">
-                                            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
-                                                <img
-                                                    src="https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?q=80&w=900&auto=format&fit=crop"
-                                                    alt="Solar panels"
-                                                    className="w-full h-40 sm:h-28 lg:h-44 object-cover rounded-2xl"
-                                                />
-                                                <img
-                                                    src="https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?q=80&w=900&auto=format&fit=crop"
-                                                    alt="Rooftop solar installation"
-                                                    className="w-full h-40 sm:h-28 lg:h-44 object-cover rounded-2xl"
-                                                />
-                                                <img
-                                                    src="https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=900&auto=format&fit=crop"
-                                                    alt="Solar subsidy assistance"
-                                                    className="w-full h-40 sm:h-28 lg:h-44 object-cover rounded-2xl"
-                                                />
-                                            </div>
-                                            <div className="mt-4 p-4 rounded-2xl bg-orange-50 border border-orange-100">
-                                                <div className="flex items-center gap-2 text-orange-900">
-                                                    <Icon name="info" size={18} className="text-primary" />
-                                                    <p className="font-bold text-sm">Quick note</p>
-                                                </div>
-                                                <p className="text-orange-900/80 text-sm mt-2 leading-relaxed">
-                                                    Subsidy amount depends on your system size and approved process. We’ll help you file correctly to avoid delays.
+                                            <div>
+                                                <h3 className="text-3xl font-extrabold text-dark">Government Solar Subsidy</h3>
+                                                <p className="text-gray-600 mt-2">
+                                                    Reduce your upfront cost with government-approved solar subsidies. We guide you end-to-end — eligibility check, documents, and submission.
                                                 </p>
-                                                <p className="text-orange-900 text-sm mt-2 font-semibold">
+                                                <p className="mt-3 font-bold text-dark">
                                                     Our dedicated team will help you get the subsidy without any hassle.
                                                 </p>
                                             </div>
                                         </div>
+
+                                        <div className="mt-7 overflow-hidden rounded-2xl border border-gray-100">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead>
+                                                    <tr className="bg-gray-50 text-gray-600 text-sm">
+                                                        <th className="px-5 py-4 font-bold">System Size</th>
+                                                        <th className="px-5 py-4 font-bold">Subsidy Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {[
+                                                        ['1 kW', '₹45,000'],
+                                                        ['2 kW', '₹90,000'],
+                                                        ['3 kW or above', '₹1,08,000'],
+                                                    ].map(([k, v], idx) => (
+                                                        <tr key={idx} className="hover:bg-gray-50">
+                                                            <td className="px-5 py-4 font-semibold text-dark">{k}</td>
+                                                            <td className="px-5 py-4 text-gray-700">{v}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <div className="mt-7 flex flex-col sm:flex-row gap-3">
+                                            <a
+                                                href={`https://wa.me/918400000810?text=${encodeURIComponent("Hi Smart Solar, I want to check my eligibility for Government Solar Subsidy. Please guide me.")}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="bg-primary hover:bg-orange-600 text-white px-8 py-4 rounded-xl font-extrabold text-lg transition-all shadow-lg shadow-primary/30 hover:-translate-y-0.5 text-center"
+                                            >
+                                                Check Eligibility
+                                            </a>
+                                            <button
+                                                onClick={() => {
+                                                    const el = document.getElementById('contact');
+                                                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                }}
+                                                className="bg-white border-2 border-gray-200 hover:border-primary text-dark hover:text-primary px-8 py-4 rounded-xl font-extrabold text-lg transition-all"
+                                            >
+                                                Apply Now
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="lg:w-[420px]">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
+                                            <img
+                                                src="https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?q=80&w=900&auto=format&fit=crop"
+                                                alt="Solar panels"
+                                                className="w-full h-40 sm:h-28 lg:h-44 object-cover rounded-2xl"
+                                            />
+                                            <img
+                                                src="https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?q=80&w=900&auto=format&fit=crop"
+                                                alt="Rooftop solar installation"
+                                                className="w-full h-40 sm:h-28 lg:h-44 object-cover rounded-2xl"
+                                            />
+                                            <img
+                                                src="https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=900&auto=format&fit=crop"
+                                                alt="Solar subsidy assistance"
+                                                className="w-full h-40 sm:h-28 lg:h-44 object-cover rounded-2xl"
+                                            />
+                                        </div>
+                                        <div className="mt-4 p-4 rounded-2xl bg-orange-50 border border-orange-100">
+                                            <div className="flex items-center gap-2 text-orange-900">
+                                                <Icon name="info" size={18} className="text-primary" />
+                                                <p className="font-bold text-sm">Quick note</p>
+                                            </div>
+                                            <p className="text-orange-900/80 text-sm mt-2 leading-relaxed">
+                                                Subsidy amount depends on your system size and approved process. We’ll help you file correctly to avoid delays.
+                                            </p>
+                                            <p className="text-orange-900 text-sm mt-2 font-semibold">
+                                                Our dedicated team will help you get the subsidy without any hassle.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        )}
+                        </div>
 
                         {/* Loan & Finance */}
                         <div className="mt-14">
