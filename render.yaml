@@ -15,5 +15,5 @@ services:
       - key: SESSION_COOKIE_SECURE
         value: "true"
       - key: DB_PATH
-        value: ./leadsdb
+        value: ./leads.db
 
