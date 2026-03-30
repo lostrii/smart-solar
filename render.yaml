@@ -15,8 +15,5 @@ services:
       - key: SESSION_COOKIE_SECURE
         value: "true"
       - key: DB_PATH
-        value: /var/data/leads.db
-    disk:
-      name: smart-solar-data
-      mountPath: /var/data
-      sizeGB: 1
+        value: ./leadsdb
+
