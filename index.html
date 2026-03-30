@@ -376,22 +376,26 @@
                         </div>
                     </div>
 
-                    {/* Prev / Next — solid controls (readable on any slide) */}
+                    {/* Prev / Next — clear arrow icons (SVG) on brand buttons */}
                     <button
                         type="button"
                         aria-label="Previous slide"
                         onClick={() => goTo((current - 1 + slides.length) % slides.length)}
-                        className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-20 flex h-12 w-12 items-center justify-center rounded-full border border-white/90 bg-white/95 text-gray-900 shadow-lg ring-1 ring-black/5 transition-all duration-200 hover:bg-white hover:shadow-xl active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/60"
+                        className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-20 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-xl border-2 border-white/30 transition-all duration-200 hover:bg-orange-600 hover:shadow-2xl active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/70"
                     >
-                        <Icon name="chevron-left" size={22} className="text-gray-900" />
+                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M15 18l-6-6 6-6" />
+                        </svg>
                     </button>
                     <button
                         type="button"
                         aria-label="Next slide"
                         onClick={() => goTo((current + 1) % slides.length)}
-                        className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 z-20 flex h-12 w-12 items-center justify-center rounded-full border border-white/90 bg-white/95 text-gray-900 shadow-lg ring-1 ring-black/5 transition-all duration-200 hover:bg-white hover:shadow-xl active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/60"
+                        className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 z-20 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-xl border-2 border-white/30 transition-all duration-200 hover:bg-orange-600 hover:shadow-2xl active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/70"
                     >
-                        <Icon name="chevron-right" size={22} className="text-gray-900" />
+                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M9 18l6-6-6-6" />
+                        </svg>
                     </button>
                 </section>
             );
@@ -1643,7 +1647,7 @@
                                 <p className="mb-8 opacity-90">Our solar experts will analyze your roof and bill to provide a custom proposal.</p>
                                 <div className="space-y-4">
                                     <div className="flex items-center"><Icon name="phone" className="mr-4" /> +91 98765 43210</div>
-                                    <div className="flex items-center"><Icon name="mail" className="mr-4" /> hello@smartsolar.com</div>
+                                    <a href="mailto:smartsolarcompanyy@gmail.com" className="flex items-center text-white hover:opacity-90 transition-opacity underline-offset-2 hover:underline"><Icon name="mail" className="mr-4 flex-shrink-0" /> smartsolarcompanyy@gmail.com</a>
                                 </div>
                             </div>
                             <div className="p-10 md:w-3/5">
@@ -3267,7 +3271,7 @@
                 return p === '/admin' ? 'admin' : 'home';
             });
             const [leads, setLeads] = useState([
-                { id: 101, name: "Rahul Verma", phone: "9876543210", email: "rahul@test.com", city: "Pune", date: "29/03/2026" }
+                { id: 101, name: "Rahul Verma", phone: "9876543210", email: "smartsolarcompanyy@gmail.com", city: "Pune", date: "29/03/2026" }
             ]);
 
             const getPendingLeads = () => {
@@ -3452,8 +3456,8 @@
                                         <a href="tel:+918400000810" className="flex items-center gap-2 text-gray-400 hover:text-primary transition-colors text-sm">
                                             <Icon name="phone" size={14} className="text-primary flex-shrink-0" /> +91 84000 00810
                                         </a>
-                                        <a href="mailto:support@smartsolar.in" className="flex items-center gap-2 text-gray-400 hover:text-primary transition-colors text-sm">
-                                            <Icon name="mail" size={14} className="text-primary flex-shrink-0" /> support@smartsolar.in
+                                        <a href="mailto:smartsolarcompanyy@gmail.com" className="flex items-center gap-2 text-gray-400 hover:text-primary transition-colors text-sm">
+                                            <Icon name="mail" size={14} className="text-primary flex-shrink-0" /> smartsolarcompanyy@gmail.com
                                         </a>
                                     </div>
                                     <div className="flex gap-3">
@@ -3485,7 +3489,7 @@
                                         <span className="w-4 h-0.5 bg-primary inline-block rounded" /> Quick Links
                                     </h4>
                                     <ul className="space-y-3">
-                                        {[['About Us','about'],['On-Grid Solar','on-grid-solar'],['Off-Grid Solar','off-grid-solar'],['Contact Us','consultation']].map(([label, r]) => (
+                                        {[['About Us','about'],['On-Grid Solar','on-grid-solar'],['Off-Grid Solar','off-grid-solar'],['Hybrid Solar','hybrid-solar'],['Contact Us','consultation']].map(([label, r]) => (
                                             <li key={label}>
                                                 <a href="#" onClick={(e) => { e.preventDefault(); setRoute(r); window.scrollTo({top:0}); }}
                                                     className="text-gray-400 hover:text-primary transition-colors text-sm flex items-center gap-1.5 group">
