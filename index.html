@@ -1075,7 +1075,7 @@
                                             </a>
                                             <button
                                                 onClick={() => {
-                                                    const el = document.getElementById('contact');
+                                                        const el = document.getElementById('contact') || document.getElementById('loan-finance-form');
                                                     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                                 }}
                                                 className="bg-white border-2 border-gray-200 hover:border-primary text-dark hover:text-primary px-8 py-4 rounded-xl font-extrabold text-lg transition-all"
