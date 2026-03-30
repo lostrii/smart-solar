@@ -376,18 +376,22 @@
                         </div>
                     </div>
 
-                    {/* Prev / Next Arrows */}
+                    {/* Prev / Next — solid controls (readable on any slide) */}
                     <button
+                        type="button"
+                        aria-label="Previous slide"
                         onClick={() => goTo((current - 1 + slides.length) % slides.length)}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/20 hover:bg-white/40 border border-white/40 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"
+                        className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 z-20 flex h-12 w-12 items-center justify-center rounded-full border border-white/90 bg-white/95 text-gray-900 shadow-lg ring-1 ring-black/5 transition-all duration-200 hover:bg-white hover:shadow-xl active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/60"
                     >
-                        <Icon name="chevron-left" size={24} />
+                        <Icon name="chevron-left" size={22} className="text-gray-900" />
                     </button>
                     <button
+                        type="button"
+                        aria-label="Next slide"
                         onClick={() => goTo((current + 1) % slides.length)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/20 hover:bg-white/40 border border-white/40 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"
+                        className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 z-20 flex h-12 w-12 items-center justify-center rounded-full border border-white/90 bg-white/95 text-gray-900 shadow-lg ring-1 ring-black/5 transition-all duration-200 hover:bg-white hover:shadow-xl active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/60"
                     >
-                        <Icon name="chevron-right" size={24} />
+                        <Icon name="chevron-right" size={22} className="text-gray-900" />
                     </button>
                 </section>
             );
