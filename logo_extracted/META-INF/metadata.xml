@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+        <rdf:Description rdf:about="" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cdrinfo="http://namespace.corel.com/cdr/metadata/1.0/fileinfo/" xmlns:crl="http://namespace.corel.com/zcf/metadata/1.0/" xmlns:cdt="http://namespace.corel.com/cdt/metadata/1.0/" xmlns:cdr="http://namespace.corel.com/cdr/metadata/1.0/" xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/">
+            <xmp:CreateDate>2025-10-10T14:43:57+05:30</xmp:CreateDate>
+            <xmp:ModifyDate>2025-10-10T15:12:13+05:30</xmp:ModifyDate>
+            <xmp:MetadataDate>2025-10-10T15:12:13+05:30</xmp:MetadataDate>
+            <dc:format>application/x-vnd.corel.zcf.draw.document+zip</dc:format>
+            <cdrinfo:FontsUsed>
+                <rdf:Bag>
+                    <rdf:li>Arial</rdf:li>
+                    <rdf:li>Arial MT</rdf:li>
+                    <rdf:li>Arial MT Black</rdf:li>
+                    <rdf:li>MS Gothic</rdf:li>
+                </rdf:Bag>
+            </cdrinfo:FontsUsed>
+            <dc:creator>
+                <rdf:Seq>
+                    <rdf:li>AFAQ</rdf:li>
+                </rdf:Seq>
+            </dc:creator>
+            <crl:LastAuthor>AFAQ</crl:LastAuthor>
+            <cdt:Sided />
+            <cdt:Folds />
+            <cdt:Type />
+            <cdt:Industry />
+            <cdr:ProductName>CorelDRAW</cdr:ProductName>
+            <cdr:Locale>1033</cdr:Locale>
+            <cdrinfo:EmbeddedOleObjects>false</cdrinfo:EmbeddedOleObjects>
+            <cdr:CoreVersion>2600</cdr:CoreVersion>
+            <crl:Keywords>
+                <rdf:Alt />
+            </crl:Keywords>
+            <crl:Notes>
+                <rdf:Alt />
+            </crl:Notes>
+            <dc:title>
+                <rdf:Alt />
+            </dc:title>
+            <crl:Subject>
+                <rdf:Alt />
+            </crl:Subject>
+            <dc:rights>
+                <rdf:Alt />
+            </dc:rights>
+            <crl:Revision>1</crl:Revision>
+            <crl:Category>
+                <rdf:Alt />
+            </crl:Category>
+            <cdr:ProductId>0</cdr:ProductId>
+            <cdr:AppVersion>2620</cdr:AppVersion>
+            <cdr:BuildNumber>170</cdr:BuildNumber>
+            <cdr:Platform>0</cdr:Platform>
+            <cdrinfo:FontsEmbedded>true</cdrinfo:FontsEmbedded>
+            <crl:Language>1033</crl:Language>
+            <dc:identifier>a8ba1c50-a99d-4328-ad68-5b99bc39d6f8</dc:identifier>
+            <xmpMM:InstanceID>a8ba1c50-a99d-4328-ad68-5b99bc39d6f8</xmpMM:InstanceID>
+            <xmpMM:DocumentID>88bcad6b-6dfb-4ebd-b2d9-94851cf4fb8b</xmpMM:DocumentID>
+            <crl:DerivedFrom>
+                <rdf:Seq />
+            </crl:DerivedFrom>
+            <xmp:Rating>0</xmp:Rating>
+            <cdrinfo:NumPages>1</cdrinfo:NumPages>
+            <cdrinfo:NumLayers>1</cdrinfo:NumLayers>
+            <cdrinfo:PageWidth>1091730</cdrinfo:PageWidth>
+            <cdrinfo:PageHeight>280868</cdrinfo:PageHeight>
+            <cdrinfo:PageDimensions>109.173 x 28.0868 mm</cdrinfo:PageDimensions>
+            <cdrinfo:PageSizeName />
+            <cdrinfo:PageOrientation>2</cdrinfo:PageOrientation>
+            <cdrinfo:ResolutionX>300</cdrinfo:ResolutionX>
+            <cdrinfo:ResolutionY>300</cdrinfo:ResolutionY>
+            <cdrinfo:Effects rdf:parseType="Resource" xmlns:inEff="http://namespace.corel.com/cdr/metadata/1.0/effectInfo/">
+                <inEff:Perspective>0</inEff:Perspective>
+                <inEff:Envelope>0</inEff:Envelope>
+                <inEff:DropShadow>0</inEff:DropShadow>
+                <inEff:Blend>0</inEff:Blend>
+                <inEff:Extrude>0</inEff:Extrude>
+                <inEff:Bevel>0</inEff:Bevel>
+                <inEff:Contour>0</inEff:Contour>
+                <inEff:PowerClip>1</inEff:PowerClip>
+                <inEff:Clone>0</inEff:Clone>
+                <inEff:Lens>0</inEff:Lens>
+                <inEff:Transparency>0</inEff:Transparency>
+                <inEff:Distortion>0</inEff:Distortion>
+            </cdrinfo:Effects>
+            <cdrinfo:Objects rdf:parseType="Resource" xmlns:inObj="http://namespace.corel.com/cdr/metadata/1.0/objectInfo/">
+                <inObj:Total>30</inObj:Total>
+                <inObj:Group>3</inObj:Group>
+                <inObj:Curve>26</inObj:Curve>
+                <inObj:Rect>0</inObj:Rect>
+                <inObj:Bitmap>0</inObj:Bitmap>
+                <inObj:Ellipse>1</inObj:Ellipse>
+                <inObj:MeshFill>0</inObj:MeshFill>
+                <inObj:Polygon>0</inObj:Polygon>
+                <inObj:OLELinked>0</inObj:OLELinked>
+                <inObj:OLEEmbedded>0</inObj:OLEEmbedded>
+                <inObj:Guideline>0</inObj:Guideline>
+                <inObj:SymbolDefinitions>0</inObj:SymbolDefinitions>
+                <inObj:SymbolInstances>0</inObj:SymbolInstances>
+                <inObj:Text>3</inObj:Text>
+            </cdrinfo:Objects>
+            <cdrinfo:CurveInfo inCrv:MaxNodes="59" inCrv:Nodes="261" inCrv:Subpaths="16" xmlns:inCrv="http://namespace.corel.com/cdr/metadata/1.0/curveInfo/" />
+            <cdrinfo:BitmapInfo rdf:parseType="Resource">
+                <cdrinfo:Types>
+                    <rdf:Bag />
+                </cdrinfo:Types>
+                <cdrinfo:LinkPaths>
+                    <rdf:Bag />
+                </cdrinfo:LinkPaths>
+            </cdrinfo:BitmapInfo>
+            <cdrinfo:TextInfo rdf:parseType="Resource" xmlns:inTxt="http://namespace.corel.com/cdr/metadata/1.0/textInfo/">
+                <inTxt:ParagraphText>0</inTxt:ParagraphText>
+                <inTxt:ArtisticText>3</inTxt:ArtisticText>
+                <inTxt:Frames>0</inTxt:Frames>
+                <inTxt:EmptyFrames>0</inTxt:EmptyFrames>
+                <inTxt:Paragraphs>0</inTxt:Paragraphs>
+                <inTxt:Lines>3</inTxt:Lines>
+                <inTxt:Words>4</inTxt:Words>
+                <inTxt:Characters>20</inTxt:Characters>
+                <inTxt:DocFormatterId>1800</inTxt:DocFormatterId>
+                <inTxt:Languages>
+                    <rdf:Bag>
+                        <rdf:li>3081</rdf:li>
+                    </rdf:Bag>
+                </inTxt:Languages>
+            </cdrinfo:TextInfo>
+            <cdrinfo:Styles>
+                <rdf:Bag />
+            </cdrinfo:Styles>
+            <cdrinfo:FillInfo rdf:parseType="Resource" xmlns:inFill="http://namespace.corel.com/cdr/metadata/1.0/fillInfo/">
+                <inFill:None>1</inFill:None>
+                <inFill:Uniform>27</inFill:Uniform>
+                <inFill:Fountain>2</inFill:Fountain>
+                <inFill:Texture>0</inFill:Texture>
+                <inFill:Postscript>0</inFill:Postscript>
+                <inFill:Hatch>0</inFill:Hatch>
+                <inFill:Pattern>0</inFill:Pattern>
+                <inFill:Colors>
+                    <rdf:Bag>
+                        <rdf:li>CMYK255</rdf:li>
+                        <rdf:li>RGB</rdf:li>
+                    </rdf:Bag>
+                </inFill:Colors>
+                <inFill:Palettes>
+                    <rdf:Bag>
+                        <rdf:li>CMYK Palette</rdf:li>
+                    </rdf:Bag>
+                </inFill:Palettes>
+                <inFill:SpotColors>
+                    <rdf:Bag />
+                </inFill:SpotColors>
+            </cdrinfo:FillInfo>
+            <cdrinfo:OutlineInfo rdf:parseType="Resource" xmlns:inOtl="http://namespace.corel.com/cdr/metadata/1.0/outlineInfo/">
+                <inOtl:None>28</inOtl:None>
+                <inOtl:Solid>2</inOtl:Solid>
+                <inOtl:Dashed>0</inOtl:Dashed>
+                <inOtl:Enhanced>0</inOtl:Enhanced>
+                <inOtl:BehindFill>0</inOtl:BehindFill>
+                <inOtl:Hairline>0</inOtl:Hairline>
+                <inOtl:ScalePen>0</inOtl:ScalePen>
+                <inOtl:Colors>
+                    <rdf:Bag>
+                        <rdf:li>RGB</rdf:li>
+                    </rdf:Bag>
+                </inOtl:Colors>
+                <inOtl:Palettes>
+                    <rdf:Bag />
+                </inOtl:Palettes>
+                <inOtl:SpotColors>
+                    <rdf:Bag />
+                </inOtl:SpotColors>
+            </cdrinfo:OutlineInfo>
+            <cdr:ClipRect rect:bottom="-125487" rect:left="-531578" rect:right="530152" rect:top="125381" xmlns:rect="http://namespace.corel.com/cdr/metadata/1.0/rect/" />
+            <cdrinfo:ColorInfo inClr:CmykProfileName="ISO Coated v2 (ECI)" inClr:ColorMode="1" inClr:GrayscaleProfileName="Dot Gain 15%" inClr:RenderingIntent="1" inClr:RgbProfileName="sRGB IEC61966-2.1" xmlns:inClr="http://namespace.corel.com/cdr/metadata/1.0/colorInfo/" />
+            <crl:OpenMetadata>
+                <rdf:Bag />
+            </crl:OpenMetadata>
+        </rdf:Description>
+    </rdf:RDF>
+</x:xmpmeta>

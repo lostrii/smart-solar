@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+        <rdf:Description rdf:about="" xmlns="http://namespace.corel.com/Cdr/metadata">
+            <TextStream>
+                <TextRun break="para" lang="3081">&amp; COMPANY</TextRun>
+            </TextStream>
+            <TextStream>
+                <TextRun break="para" lang="3081">SOLAR</TextRun>
+            </TextStream>
+            <TextStream>
+                <TextRun break="para" lang="3081">SMART </TextRun>
+            </TextStream>
+            <ObjectNames>
+                <rdf:Bag />
+            </ObjectNames>
+            <LayerNames>
+                <rdf:Bag>
+                    <rdf:li>Layer 1</rdf:li>
+                </rdf:Bag>
+            </LayerNames>
+            <PageNames>
+                <rdf:Bag />
+            </PageNames>
+        </rdf:Description>
+    </rdf:RDF>
+</x:xmpmeta>

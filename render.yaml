@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: smart-solar
+    env: python
+    plan: free
+    buildCommand: python -m pip install -r requirements.txt
+    startCommand: waitress-serve --listen=0.0.0.0:$PORT app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: HOST
+        value: 0.0.0.0
+      - key: TRUST_PROXY
+        value: "true"
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: DB_PATH
+        value: /var/data/leads.db
+    disk:
+      name: smart-solar-data
+      mountPath: /var/data
+      sizeGB: 1
