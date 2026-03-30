@@ -171,20 +171,33 @@
                                 </a>
                             </div>
 
-                            {/* Mobile Hamburger */}
+                            {/* Mobile menu toggle — CSS hamburger → X (md:hidden keeps desktop unchanged) */}
                             <button
-                                className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors"
-                                onClick={() => { setMobileOpen(o => !o); setMobileSection(null); }}
-                                aria-label="Toggle menu"
+                                type="button"
+                                className="md:hidden ml-auto flex items-center justify-center w-11 h-11 shrink-0 rounded-xl border border-gray-200 bg-white text-gray-900 shadow-sm hover:bg-gray-50 hover:border-gray-300 active:scale-[0.98] transition-all duration-200 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                                onClick={() => { setMobileOpen((o) => !o); setMobileSection(null); }}
+                                aria-expanded={mobileOpen}
+                                aria-controls="mobile-nav-drawer"
+                                aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
                             >
-                                <Icon name={mobileOpen ? 'x' : 'menu'} size={22} className="text-gray-700" />
+                                <span className="relative block h-5 w-6" aria-hidden="true">
+                                    <span
+                                        className={`absolute left-0 block h-0.5 w-6 rounded-full bg-gray-900 transition-all duration-300 ease-out ${mobileOpen ? 'top-[9px] rotate-45' : 'top-0 rotate-0'}`}
+                                    />
+                                    <span
+                                        className={`absolute left-0 top-[9px] block h-0.5 w-6 rounded-full bg-gray-900 transition-all duration-300 ease-out ${mobileOpen ? 'opacity-0 scale-0' : 'opacity-100 scale-100'}`}
+                                    />
+                                    <span
+                                        className={`absolute left-0 block h-0.5 w-6 rounded-full bg-gray-900 transition-all duration-300 ease-out ${mobileOpen ? 'top-[9px] -rotate-45' : 'top-[18px] rotate-0'}`}
+                                    />
+                                </span>
                             </button>
                         </div>
                     </div>
 
                     {/* Mobile Drawer */}
                     {mobileOpen && (
-                        <div className="md:hidden bg-white border-t border-gray-100 shadow-xl px-4 py-4 space-y-1 max-h-screen overflow-y-auto">
+                        <div id="mobile-nav-drawer" className="md:hidden bg-white border-t border-gray-100 shadow-xl px-4 py-4 space-y-1 max-h-screen overflow-y-auto transition-opacity duration-200">
 
                             {/* Our Services */}
                             <div>
