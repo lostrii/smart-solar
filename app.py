@@ -128,6 +128,8 @@ def create_app() -> Flask:
 
     admin_username = get_env("ADMIN_USERNAME")
     admin_password_hash = os.environ.get("ADMIN_PASSWORD_HASH")
+    # Secret admin portal route (changeable via env, but has a safe default).
+    admin_portal_path = (os.environ.get("ADMIN_PORTAL_PATH") or "admin-solar-portal-8472").strip().lstrip("/")
 
     # Optional fallback: if you only have ADMIN_PASSWORD_PLAIN, we hash it at startup (never write to disk).
     admin_password_plain = os.environ.get("ADMIN_PASSWORD_PLAIN")
@@ -614,16 +616,22 @@ def create_app() -> Flask:
         session["admin_username"] = username
         session.permanent = True
 
-        return redirect(url_for("admin"))
+        return redirect("/" + admin_portal_path)
 
     @app.get("/logout")
     def logout():
         session.clear()
         return redirect(url_for("login"))
 
+    # Old route is disabled to avoid discovery of admin panel.
     @app.get("/admin")
+    def admin_disabled():
+        return ("Not Found", 404)
+
+    # Secret admin portal route.
+    @app.get("/" + admin_portal_path)
     @require_admin
-    def admin():
+    def admin_portal():
         return send_from_directory(BASE_DIR, "index.html")
 
     @app.post("/api/leads")
