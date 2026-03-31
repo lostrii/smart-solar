@@ -828,6 +828,10 @@ def create_app() -> Flask:
         out = []
         for d in docs:
             ts = d.get("timestamp")
+            # MongoDB returns naive UTC datetimes by default; force timezone to UTC
+            # so JS Date parsing doesn't assume local time.
+            if isinstance(ts, datetime) and ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
             out.append(
                 {
                     "id": str(d.get("_id")),
@@ -895,6 +899,8 @@ def create_app() -> Flask:
         out = []
         for d in docs:
             ts = d.get("timestamp")
+            if isinstance(ts, datetime) and ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
             out.append(
                 {
                     "id": str(d.get("_id")),
@@ -994,6 +1000,8 @@ def create_app() -> Flask:
         out = []
         for d in docs:
             ts = d.get("timestamp")
+            if isinstance(ts, datetime) and ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
             out.append(
                 {
                     "id": str(d.get("_id")),
@@ -1095,6 +1103,8 @@ def create_app() -> Flask:
             for d in docs:
                 ts = d.get("timestamp")
                 if isinstance(ts, datetime):
+                    if ts.tzinfo is None:
+                        ts = ts.replace(tzinfo=timezone.utc)
                     ts_iso = ts.isoformat()
                     created_at_val = d.get("created_at") or ts.strftime("%Y-%m-%d %H:%M:%S")
                 else:
