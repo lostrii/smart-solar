@@ -838,7 +838,8 @@
             };
 
             // ---- Shared input panel
-            const InputPanel = () => (
+            // NOTE: This is a render helper (not a React component) to avoid remounting inputs on each keystroke.
+            const renderInputPanel = () => (
                 <div className="p-8 md:p-10 bg-gray-50/60 border-r border-gray-100">
                     <h3 className="text-2xl font-bold mb-8 flex items-center"><Icon name="settings" className="mr-3 text-primary" /> System Configuration</h3>
                     <div className="space-y-8">
@@ -915,7 +916,7 @@
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-                            <InputPanel />
+                            {renderInputPanel()}
 
                             {/* Results Panel */}
                             <div className="p-8 md:p-10 bg-white">
