@@ -756,6 +756,7 @@
             const [propertyType, setPropertyType] = useState('residential');
             const [location, setLocation] = useState('');
             const [isLocating, setIsLocating] = useState(false);
+            const [locError, setLocError] = useState('');
             const [activeTab, setActiveTab] = useState('without'); // 'without' | 'with'
 
             // --- Core Calculations ---
@@ -787,9 +788,53 @@
 
             const formatINR = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 
-            const detectLocation = () => {
+            const detectLocation = async () => {
+                setLocError('');
                 setIsLocating(true);
-                setTimeout(() => { setLocation("Mumbai, Maharashtra"); setIsLocating(false); }, 1500);
+
+                try {
+                    if (!navigator.geolocation) {
+                        throw new Error('Geolocation not supported');
+                    }
+
+                    const position = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: true,
+                            timeout: 12000,
+                            maximumAge: 60_000
+                        });
+                    });
+
+                    const { latitude, longitude } = position.coords || {};
+                    if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+                        throw new Error('Could not read coordinates');
+                    }
+
+                    // Reverse geocode via OpenStreetMap Nominatim (no API key required).
+                    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}`;
+                    const res = await fetch(url, {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    if (!res.ok) throw new Error('Reverse lookup failed');
+                    const data = await res.json();
+
+                    const a = (data && data.address) ? data.address : {};
+                    const city =
+                        a.city || a.town || a.village || a.suburb || a.county || a.state_district || '';
+                    const state = a.state || '';
+                    const country = a.country || '';
+
+                    const label = [city, state].filter(Boolean).join(', ') || data.display_name || '';
+                    if (!label) throw new Error('Could not detect location');
+
+                    setLocation(label);
+                } catch (e) {
+                    setLocError('Could not detect location. Please type your city manually.');
+                } finally {
+                    setIsLocating(false);
+                }
             };
 
             // ---- Shared input panel
@@ -830,10 +875,11 @@
                                 <input type="text" placeholder="Enter your city" value={location}
                                     onChange={(e) => setLocation(e.target.value)}
                                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
-                                <button onClick={detectLocation} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 rounded-xl border border-gray-300 transition-colors flex items-center whitespace-nowrap">
+                                <button type="button" onClick={detectLocation} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 rounded-xl border border-gray-300 transition-colors flex items-center whitespace-nowrap cursor-pointer">
                                     {isLocating ? 'Detecting...' : <><Icon name="crosshair" size={18} className="mr-1" />Auto</>}
                                 </button>
                             </div>
+                            {locError && <p className="mt-2 text-xs text-red-600 font-semibold">{locError}</p>}
                         </div>
                         {/* System Size Preview */}
                         <div className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center justify-between">
