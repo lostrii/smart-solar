@@ -1798,7 +1798,7 @@
         );
 
         // Admin Panel
-        const AdminPanel = ({ leads, setRoute }) => {
+        const AdminPanel = ({ leads, reviews, onApproveReview, onDeleteReview, setRoute }) => {
             const fmtINR = (n) => {
                 if (n === null || n === undefined || n === '') return '—';
                 const num = Number(n);
@@ -1899,6 +1899,73 @@
                                                     </td>
                                                     <td className="p-4">
                                                         <span className="text-gray-700 text-sm">{fmtINR(lead.loan_amount)}</span>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Reviews moderation */}
+                        <div className="mt-10 bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
+                            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                                <h3 className="font-semibold text-gray-700">Customer Reviews ({(reviews || []).length})</h3>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-white border-b border-gray-100 text-gray-500 text-sm">
+                                            <th className="p-4 font-semibold">Timestamp</th>
+                                            <th className="p-4 font-semibold">Name</th>
+                                            <th className="p-4 font-semibold">Rating</th>
+                                            <th className="p-4 font-semibold">Message</th>
+                                            <th className="p-4 font-semibold">Status</th>
+                                            <th className="p-4 font-semibold">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {(reviews || []).length === 0 ? (
+                                            <tr>
+                                                <td colSpan="6" className="p-8 text-center text-gray-400">No reviews yet.</td>
+                                            </tr>
+                                        ) : (
+                                            (reviews || []).map((r) => (
+                                                <tr key={r.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors align-top">
+                                                    <td className="p-4 text-gray-600 whitespace-nowrap">{r.timestamp ? new Date(r.timestamp).toLocaleString() : '—'}</td>
+                                                    <td className="p-4 font-medium whitespace-nowrap">{r.name}</td>
+                                                    <td className="p-4 whitespace-nowrap">
+                                                        <span className="text-amber-500 font-bold">{'★'.repeat(Math.max(0, Math.min(5, Number(r.rating) || 0)))}</span>
+                                                        <span className="text-gray-400 ml-2 text-sm">{Number(r.rating) || 0}/5</span>
+                                                    </td>
+                                                    <td className="p-4 text-gray-700 text-sm max-w-md">
+                                                        {r.message}
+                                                    </td>
+                                                    <td className="p-4 whitespace-nowrap">
+                                                        {r.approved ? (
+                                                            <span className="bg-emerald-100 text-emerald-800 text-xs font-semibold px-2.5 py-1 rounded-full">Approved</span>
+                                                        ) : (
+                                                            <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-1 rounded-full">Pending</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="p-4 whitespace-nowrap">
+                                                        <div className="flex gap-2">
+                                                            {!r.approved && (
+                                                                <button
+                                                                    onClick={() => onApproveReview && onApproveReview(r.id)}
+                                                                    className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold"
+                                                                >
+                                                                    Approve
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => onDeleteReview && onDeleteReview(r.id)}
+                                                                className="px-3 py-2 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-sm font-semibold"
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))
@@ -2561,9 +2628,43 @@
             );
         };
 
-        // ── Reviews / Testimonials ────────────────────────────────
+        // ── Customer Reviews ────────────────────────────────
         const Reviews = () => {
-            const reviews = [
+            const [publicReviews, setPublicReviews] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [submitStatus, setSubmitStatus] = useState(null); // 'ok' | 'err'
+            const [form, setForm] = useState({ name: '', rating: '5', message: '' });
+
+            useEffect(() => {
+                fetch('/api/reviews?limit=24', { credentials: 'same-origin' })
+                    .then(r => r.ok ? r.json() : [])
+                    .then(data => { if (Array.isArray(data)) setPublicReviews(data); })
+                    .catch(() => {})
+                    .finally(() => setLoading(false));
+            }, []);
+
+            const handleSubmitReview = async (e) => {
+                e.preventDefault();
+                setSubmitStatus(null);
+                const payload = { name: form.name, rating: Number(form.rating), message: form.message };
+                try {
+                    const res = await fetch('/api/reviews', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw new Error('bad');
+                    setSubmitStatus('ok');
+                    setForm({ name: '', rating: '5', message: '' });
+                    setTimeout(() => setSubmitStatus(null), 4000);
+                } catch {
+                    setSubmitStatus('err');
+                    setTimeout(() => setSubmitStatus(null), 4000);
+                }
+            };
+
+            const fallbackReviews = [
                 {
                     name: 'Luv Singh',
                     location: 'Lucknow, UP',
@@ -2602,16 +2703,18 @@
                 }
             ];
 
+            const reviews = (publicReviews && publicReviews.length) ? publicReviews : fallbackReviews;
+
             return (
-                <section className="py-20 bg-white">
+                <section id="customer-reviews" className="py-20 bg-white">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-14">
                             <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-full px-5 py-2 mb-5">
                                 <Icon name="users" size={18} className="text-emerald-600" />
                                 <span className="text-emerald-700 font-semibold text-sm">Trusted by <span className="text-emerald-800 font-extrabold">1,000+</span> Happy Customers across India</span>
                             </div>
-                            <h2 className="text-4xl font-extrabold text-dark mb-4">What Our Customers Say</h2>
-                            <p className="text-gray-500 text-lg max-w-xl mx-auto">Real stories from real people who switched to Smart Solar & Co.</p>
+                            <h2 className="text-4xl font-extrabold text-dark mb-4">Customer Reviews</h2>
+                            <p className="text-gray-500 text-lg max-w-xl mx-auto">Only approved reviews are shown publicly.</p>
                             <div className="flex items-center justify-center gap-3 mt-5">
                                 <div className="flex">{[1,2,3,4,5].map(i => <span key={i} className="text-amber-400 text-xl">★</span>)}</div>
                                 <span className="font-bold text-xl text-dark">4.9</span>
@@ -2623,24 +2726,94 @@
                             {reviews.map((r, i) => (
                                 <div key={i} className="bg-gray-50 border border-gray-100 rounded-3xl p-6 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col">
                                     <div className="flex mb-4">
-                                        {[1,2,3,4,5].map(s => <span key={s} className="text-amber-400 text-lg">★</span>)}
+                                        {[1,2,3,4,5].map(s => (
+                                            <span key={s} className={`text-lg ${s <= (Number(r.rating) || 0) ? 'text-amber-400' : 'text-amber-200'}`}>★</span>
+                                        ))}
                                     </div>
-                                    <p className="text-gray-600 text-sm leading-relaxed flex-1 mb-5 italic">"{r.text}"</p>
-                                    <span className="bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full inline-block mb-4 w-fit">
-                                        ☀ {r.system}
-                                    </span>
+                                    <p className="text-gray-600 text-sm leading-relaxed flex-1 mb-5 italic">"{r.text || r.message}"</p>
+                                    {r.system && (
+                                        <span className="bg-primary/10 text-primary text-xs font-semibold px-3 py-1 rounded-full inline-block mb-4 w-fit">
+                                            ☀ {r.system}
+                                        </span>
+                                    )}
                                     <div className="flex items-center gap-3 border-t border-gray-100 pt-4">
-                                        <div className={`w-10 h-10 rounded-full ${r.color} text-white font-bold flex items-center justify-center text-sm flex-shrink-0`}>
-                                            {r.avatar}
+                                        <div className={`w-10 h-10 rounded-full ${r.color || 'bg-primary'} text-white font-bold flex items-center justify-center text-sm flex-shrink-0`}>
+                                            {(r.avatar || (r.name || 'U').slice(0, 2)).toUpperCase()}
                                         </div>
                                         <div>
                                             <p className="font-bold text-dark text-sm">{r.name}</p>
-                                            <p className="text-gray-400 text-xs flex items-center"><Icon name="map-pin" size={11} className="mr-1" />{r.location}</p>
+                                            {r.location && <p className="text-gray-400 text-xs flex items-center"><Icon name="map-pin" size={11} className="mr-1" />{r.location}</p>}
                                         </div>
                                         <Icon name="check-circle" size={18} className="text-emerald-500 ml-auto flex-shrink-0" />
                                     </div>
                                 </div>
                             ))}
+                        </div>
+
+                        {/* Review submission */}
+                        <div className="max-w-3xl mx-auto mb-14">
+                            <div className="bg-white border border-gray-100 rounded-3xl shadow-xl p-8 md:p-10">
+                                <div className="flex items-start gap-4 mb-6">
+                                    <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center flex-shrink-0">
+                                        <Icon name="message-circle" size={26} className="text-emerald-700" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-extrabold text-dark">Leave a Review</h3>
+                                        <p className="text-gray-500 mt-1">Your review will be visible after admin approval.</p>
+                                    </div>
+                                </div>
+
+                                {submitStatus === 'ok' && (
+                                    <div className="mb-5 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl text-sm font-semibold">
+                                        Thanks! Your review was submitted and is pending approval.
+                                    </div>
+                                )}
+                                {submitStatus === 'err' && (
+                                    <div className="mb-5 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-semibold">
+                                        Could not submit right now. Please try again.
+                                    </div>
+                                )}
+
+                                <form onSubmit={handleSubmitReview} className="space-y-5">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Name *</label>
+                                            <input
+                                                required
+                                                value={form.name}
+                                                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                                                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                                                placeholder="Your name"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Rating *</label>
+                                            <select
+                                                required
+                                                value={form.rating}
+                                                onChange={(e) => setForm({ ...form, rating: e.target.value })}
+                                                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white"
+                                            >
+                                                {[5,4,3,2,1].map(n => <option key={n} value={String(n)}>{n}</option>)}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Review message *</label>
+                                        <textarea
+                                            required
+                                            rows="4"
+                                            value={form.message}
+                                            onChange={(e) => setForm({ ...form, message: e.target.value })}
+                                            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none"
+                                            placeholder="Share your experience..."
+                                        />
+                                    </div>
+                                    <button type="submit" className="w-full bg-primary hover:bg-orange-600 text-white py-4 rounded-xl font-extrabold text-lg transition-all shadow-lg shadow-primary/30 hover:-translate-y-0.5">
+                                        Submit Review
+                                    </button>
+                                </form>
+                            </div>
                         </div>
 
                         <div className="flex flex-wrap justify-center gap-10 text-center border-t border-gray-100 pt-10">
@@ -3281,6 +3454,7 @@
             const [leads, setLeads] = useState([
                 { id: 101, name: "Rahul Verma", phone: "9876543210", email: "smartsolarcompanyy@gmail.com", city: "Pune", date: "29/03/2026" }
             ]);
+            const [adminReviews, setAdminReviews] = useState([]);
 
             const getPendingLeads = () => {
                 try {
@@ -3357,12 +3531,33 @@
                                 if (Array.isArray(data)) setLeads(data);
                             })
                             .catch(() => {});
+
+                        fetch('/api/admin/reviews', { credentials: 'same-origin' })
+                            .then(r => r.ok ? r.json() : [])
+                            .then(data => { if (Array.isArray(data)) setAdminReviews(data); })
+                            .catch(() => {});
                     }
                 })();
             }, [route]);
 
+            const approveReview = async (id) => {
+                try {
+                    const res = await fetch(`/api/admin/reviews/${id}/approve`, { method: 'POST', credentials: 'same-origin' });
+                    if (!res.ok) return;
+                    setAdminReviews(prev => prev.map(r => r.id === id ? { ...r, approved: true } : r));
+                } catch {}
+            };
+
+            const deleteReview = async (id) => {
+                try {
+                    const res = await fetch(`/api/admin/reviews/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+                    if (!res.ok) return;
+                    setAdminReviews(prev => prev.filter(r => r.id !== id));
+                } catch {}
+            };
+
             if (route === 'admin') {
-                return <AdminPanel leads={leads} setRoute={setRoute} />;
+                return <AdminPanel leads={leads} reviews={adminReviews} onApproveReview={approveReview} onDeleteReview={deleteReview} setRoute={setRoute} />;
             }
 
             return (

@@ -15,6 +15,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
 from pymongo import MongoClient, DESCENDING
 from pymongo.errors import InvalidURI
+from bson import ObjectId
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -146,6 +147,7 @@ def create_app() -> Flask:
     use_mongo = mongo_uri.startswith("mongodb://") or mongo_uri.startswith("mongodb+srv://")
     mongo_client = None
     leads_collection = None
+    reviews_collection = None
 
     if mongo_uri and not use_mongo:
         raise RuntimeError(
@@ -177,6 +179,11 @@ def create_app() -> Flask:
         mongo_db = mongo_client[mongo_db_name] if mongo_db_name else mongo_client.get_default_database()
         leads_collection = mongo_db["leads"]
         leads_collection.create_index([("timestamp", DESCENDING)], background=True)
+
+        # Reviews collection (approved reviews only are public)
+        reviews_collection = mongo_db["reviews"]
+        reviews_collection.create_index([("timestamp", DESCENDING)], background=True)
+        reviews_collection.create_index([("approved", DESCENDING), ("timestamp", DESCENDING)], background=True)
 
         # Best-effort migration to avoid data loss when switching from the legacy SQLite leads table.
         # Can be disabled with: MONGO_MIGRATE_FROM_SQLITE=false
@@ -787,6 +794,134 @@ def create_app() -> Flask:
             ),
             201,
         )
+
+    # ────────────────────────────────────────────────────────────────
+    # Reviews API (MongoDB-backed)
+    # ────────────────────────────────────────────────────────────────
+
+    @app.get("/api/reviews")
+    def public_reviews():
+        if reviews_collection is None:
+            return jsonify([]), 200
+        limit = request.args.get("limit", "20")
+        try:
+            limit = int(limit)
+        except ValueError:
+            limit = 20
+        limit = max(1, min(100, limit))
+        docs = list(
+            reviews_collection.find(
+                {"approved": True},
+                {"name": 1, "rating": 1, "message": 1, "timestamp": 1},
+            )
+            .sort("timestamp", DESCENDING)
+            .limit(limit)
+        )
+        out = []
+        for d in docs:
+            ts = d.get("timestamp")
+            out.append(
+                {
+                    "id": str(d.get("_id")),
+                    "name": d.get("name"),
+                    "rating": d.get("rating"),
+                    "message": d.get("message"),
+                    "timestamp": ts.isoformat() if isinstance(ts, datetime) else None,
+                }
+            )
+        return jsonify(out)
+
+    @app.post("/api/reviews")
+    def submit_review():
+        if reviews_collection is None:
+            return jsonify({"error": "MongoDB not configured"}), 503
+
+        data = request.get_json(silent=True) or {}
+        if not data:
+            data = request.form.to_dict(flat=True)
+
+        name = (data.get("name") or "").strip()
+        message = (data.get("message") or "").strip()
+        rating_raw = data.get("rating")
+        try:
+            rating = int(rating_raw)
+        except Exception:
+            rating = 0
+
+        if not name or not message or rating < 1 or rating > 5:
+            return jsonify({"error": "Invalid review"}), 400
+
+        doc = {
+            "name": name,
+            "rating": rating,
+            "message": message,
+            "timestamp": datetime.now(timezone.utc),
+            "approved": False,
+        }
+        try:
+            res = reviews_collection.insert_one(doc)
+        except Exception as e:
+            return jsonify({"error": "MongoDB insert failed", "details": str(e)}), 503
+
+        return jsonify({"ok": True, "id": str(res.inserted_id), "approved": False}), 201
+
+    @app.get("/api/admin/reviews")
+    @require_admin
+    def admin_list_reviews():
+        if reviews_collection is None:
+            return jsonify([]), 200
+        limit = request.args.get("limit", "200")
+        try:
+            limit = int(limit)
+        except ValueError:
+            limit = 200
+        limit = max(1, min(500, limit))
+        docs = list(
+            reviews_collection.find(
+                {},
+                {"name": 1, "rating": 1, "message": 1, "timestamp": 1, "approved": 1},
+            )
+            .sort("timestamp", DESCENDING)
+            .limit(limit)
+        )
+        out = []
+        for d in docs:
+            ts = d.get("timestamp")
+            out.append(
+                {
+                    "id": str(d.get("_id")),
+                    "name": d.get("name"),
+                    "rating": d.get("rating"),
+                    "message": d.get("message"),
+                    "timestamp": ts.isoformat() if isinstance(ts, datetime) else None,
+                    "approved": bool(d.get("approved")),
+                }
+            )
+        return jsonify(out)
+
+    @app.post("/api/admin/reviews/<review_id>/approve")
+    @require_admin
+    def admin_approve_review(review_id: str):
+        if reviews_collection is None:
+            return jsonify({"error": "MongoDB not configured"}), 503
+        try:
+            oid = ObjectId(review_id)
+        except Exception:
+            return jsonify({"error": "Invalid id"}), 400
+        reviews_collection.update_one({"_id": oid}, {"$set": {"approved": True}})
+        return jsonify({"ok": True})
+
+    @app.delete("/api/admin/reviews/<review_id>")
+    @require_admin
+    def admin_delete_review(review_id: str):
+        if reviews_collection is None:
+            return jsonify({"error": "MongoDB not configured"}), 503
+        try:
+            oid = ObjectId(review_id)
+        except Exception:
+            return jsonify({"error": "Invalid id"}), 400
+        reviews_collection.delete_one({"_id": oid})
+        return jsonify({"ok": True})
 
     @app.get("/api/leads")
     @require_admin
