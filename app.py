@@ -14,6 +14,7 @@ from flask import Flask, jsonify, redirect, render_template_string, request, sen
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
 from pymongo import MongoClient, DESCENDING
+from pymongo.errors import InvalidURI
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -139,20 +140,32 @@ def create_app() -> Flask:
     # Leads storage:
     # - If MONGO_URI is configured, store leads in MongoDB Atlas collection `leads`
     # - Otherwise fall back to SQLite (useful for local development)
-    mongo_uri = os.environ.get("MONGO_URI", "").strip()
-    use_mongo = bool(mongo_uri)
+    mongo_uri = (os.environ.get("MONGO_URI") or "").strip()
+    use_mongo = mongo_uri.startswith("mongodb://") or mongo_uri.startswith("mongodb+srv://")
     mongo_client = None
     leads_collection = None
 
+    if mongo_uri and not use_mongo:
+        raise RuntimeError(
+            "Invalid MONGO_URI. It must start with 'mongodb://' or 'mongodb+srv://'. "
+            "Copy the full connection string from MongoDB Atlas → Connect → Drivers."
+        )
+
     if use_mongo:
         mongo_db_name = os.environ.get("MONGO_DB_NAME", "").strip() or None
-        mongo_client = MongoClient(
-            mongo_uri,
-            serverSelectionTimeoutMS=5000,
-            connectTimeoutMS=5000,
-            socketTimeoutMS=10000,
-            maxPoolSize=int(os.environ.get("MONGO_MAX_POOL_SIZE", "10")),
-        )
+        try:
+            mongo_client = MongoClient(
+                mongo_uri,
+                serverSelectionTimeoutMS=5000,
+                connectTimeoutMS=5000,
+                socketTimeoutMS=10000,
+                maxPoolSize=int(os.environ.get("MONGO_MAX_POOL_SIZE", "10")),
+            )
+        except InvalidURI as e:
+            raise RuntimeError(
+                "Invalid MONGO_URI format. It must start with 'mongodb://' or 'mongodb+srv://'. "
+                "Copy it exactly from MongoDB Atlas (no angle brackets)."
+            ) from e
         try:
             # Verify connection early (better error than failing later during inserts).
             mongo_client.admin.command("ping")
