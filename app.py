@@ -16,6 +16,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from pymongo import MongoClient, DESCENDING
 from pymongo.errors import InvalidURI
 from bson import ObjectId
+from gridfs import GridFS
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -148,6 +149,8 @@ def create_app() -> Flask:
     mongo_client = None
     leads_collection = None
     reviews_collection = None
+    job_apps_collection = None
+    fs = None
 
     if mongo_uri and not use_mongo:
         raise RuntimeError(
@@ -184,6 +187,11 @@ def create_app() -> Flask:
         reviews_collection = mongo_db["reviews"]
         reviews_collection.create_index([("timestamp", DESCENDING)], background=True)
         reviews_collection.create_index([("approved", DESCENDING), ("timestamp", DESCENDING)], background=True)
+
+        # Job applications (resume stored in GridFS)
+        job_apps_collection = mongo_db["job_applications"]
+        job_apps_collection.create_index([("timestamp", DESCENDING)], background=True)
+        fs = GridFS(mongo_db)
 
         # Best-effort migration to avoid data loss when switching from the legacy SQLite leads table.
         # Can be disabled with: MONGO_MIGRATE_FROM_SQLITE=false
@@ -911,6 +919,127 @@ def create_app() -> Flask:
         reviews_collection.update_one({"_id": oid}, {"$set": {"approved": True}})
         return jsonify({"ok": True})
 
+    # ────────────────────────────────────────────────────────────────
+    # Job applications (MongoDB + GridFS)
+    # ────────────────────────────────────────────────────────────────
+
+    @app.post("/api/job-applications")
+    def submit_job_application():
+        if job_apps_collection is None or fs is None:
+            return jsonify({"error": "MongoDB not configured"}), 503
+
+        form = request.form
+        name = (form.get("name") or "").strip()
+        email = (form.get("email") or "").strip()
+        phone = (form.get("phone") or "").strip()
+        role = (form.get("role") or "").strip()
+        message = (form.get("message") or "").strip()
+        resume = request.files.get("resume")
+
+        if not name or not email or not phone or not role or not resume:
+            return jsonify({"error": "Missing required fields"}), 400
+
+        filename = resume.filename or "resume"
+        content_type = resume.mimetype or "application/octet-stream"
+        data = resume.read()
+        if not data:
+            return jsonify({"error": "Empty resume file"}), 400
+        if len(data) > 5 * 1024 * 1024:
+            return jsonify({"error": "Resume too large (max 5MB)"}), 400
+
+        ts = datetime.now(timezone.utc)
+        try:
+            file_id = fs.put(
+                data,
+                filename=filename,
+                contentType=content_type,
+                metadata={"name": name, "email": email, "phone": phone, "role": role},
+            )
+            doc = {
+                "name": name,
+                "email": email,
+                "phone": phone,
+                "role": role,
+                "message": message,
+                "timestamp": ts,
+                "resume_file_id": file_id,
+                "resume_filename": filename,
+                "resume_content_type": content_type,
+            }
+            res = job_apps_collection.insert_one(doc)
+        except Exception as e:
+            return jsonify({"error": "MongoDB insert failed", "details": str(e)}), 503
+
+        return jsonify({"ok": True, "id": str(res.inserted_id)}), 201
+
+    @app.get("/api/admin/job-applications")
+    @require_admin
+    def admin_list_job_applications():
+        if job_apps_collection is None:
+            return jsonify([]), 200
+        limit = request.args.get("limit", "200")
+        try:
+            limit = int(limit)
+        except ValueError:
+            limit = 200
+        limit = max(1, min(500, limit))
+        docs = list(
+            job_apps_collection.find(
+                {},
+                {"name": 1, "email": 1, "phone": 1, "role": 1, "message": 1, "timestamp": 1, "resume_filename": 1},
+            )
+            .sort("timestamp", DESCENDING)
+            .limit(limit)
+        )
+        out = []
+        for d in docs:
+            ts = d.get("timestamp")
+            out.append(
+                {
+                    "id": str(d.get("_id")),
+                    "name": d.get("name"),
+                    "email": d.get("email"),
+                    "phone": d.get("phone"),
+                    "role": d.get("role"),
+                    "message": d.get("message"),
+                    "timestamp": ts.isoformat() if isinstance(ts, datetime) else None,
+                    "resume_filename": d.get("resume_filename"),
+                }
+            )
+        return jsonify(out)
+
+    @app.get("/api/admin/job-applications/<app_id>/resume")
+    @require_admin
+    def admin_download_resume(app_id: str):
+        if job_apps_collection is None or fs is None:
+            return ("Not Found", 404)
+        try:
+            oid = ObjectId(app_id)
+        except Exception:
+            return ("Not Found", 404)
+        doc = job_apps_collection.find_one({"_id": oid})
+        if not doc:
+            return ("Not Found", 404)
+        file_id = doc.get("resume_file_id")
+        if not file_id:
+            return ("Not Found", 404)
+        try:
+            grid_out = fs.get(file_id)
+        except Exception:
+            return ("Not Found", 404)
+
+        data = grid_out.read()
+        filename = doc.get("resume_filename") or grid_out.filename or "resume"
+        ctype = doc.get("resume_content_type") or getattr(grid_out, "content_type", None) or "application/octet-stream"
+        return (
+            data,
+            200,
+            {
+                "Content-Type": ctype,
+                "Content-Disposition": f'attachment; filename=\"{filename}\"',
+            },
+        )
+
     @app.delete("/api/admin/reviews/<review_id>")
     @require_admin
     def admin_delete_review(review_id: str):
@@ -1024,7 +1153,7 @@ def create_app() -> Flask:
                 # Required fields (mapped):
                 "address": r[5],
                 "system_size": None,
-                "timestamp": None,
+                "timestamp": (datetime.strptime(r[10], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc).isoformat() if r[10] else None),
             }
             for r in rows
         ]

@@ -1436,16 +1436,46 @@
             const [resumeFile, setResumeFile] = useState(null);
             const [careerForm, setCareerForm] = useState({ name: '', email: '', phone: '', role: '', message: '' });
             const [careerSubmitted, setCareerSubmitted] = useState(false);
+            const [careerError, setCareerError] = useState('');
 
             const handleResumeChange = (e) => {
                 const file = e.target.files[0];
                 if (file) setResumeFile(file);
             };
 
-            const handleCareerSubmit = (e) => {
+            const handleCareerSubmit = async (e) => {
                 e.preventDefault();
-                setCareerSubmitted(true);
-                setTimeout(() => { setCareerSubmitted(false); setCareerForm({ name:'', email:'', phone:'', role:'', message:'' }); setResumeFile(null); }, 4000);
+                setCareerError('');
+                if (!resumeFile) {
+                    setCareerError('Please upload your resume.');
+                    return;
+                }
+
+                try {
+                    const fd = new FormData();
+                    fd.append('name', careerForm.name);
+                    fd.append('email', careerForm.email);
+                    fd.append('phone', careerForm.phone);
+                    fd.append('role', careerForm.role);
+                    fd.append('message', careerForm.message || '');
+                    fd.append('resume', resumeFile, resumeFile.name);
+
+                    const res = await fetch('/api/job-applications', {
+                        method: 'POST',
+                        body: fd,
+                        credentials: 'same-origin'
+                    });
+                    if (!res.ok) throw new Error('submit failed');
+
+                    setCareerSubmitted(true);
+                    setTimeout(() => {
+                        setCareerSubmitted(false);
+                        setCareerForm({ name:'', email:'', phone:'', role:'', message:'' });
+                        setResumeFile(null);
+                    }, 4000);
+                } catch {
+                    setCareerError('Could not submit right now. Please try again.');
+                }
             };
 
             const founders = [
@@ -1675,6 +1705,14 @@
                                                 )}
                                             </label>
                                         </div>
+                                        {careerError ? (
+                                            <div className="md:col-span-2">
+                                                <div className="p-3 rounded-xl border border-red-200 bg-red-50 text-red-700 font-semibold">
+                                                    {careerError}
+                                                </div>
+                                            </div>
+                                        ) : null}
+
                                         <div className="md:col-span-2">
                                             <button type="submit" className="w-full bg-primary hover:bg-orange-600 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-lg shadow-primary/30 hover:-translate-y-0.5">
                                                 Submit Application
@@ -1868,7 +1906,7 @@
         );
 
         // Admin Panel
-        const AdminPanel = ({ leads, reviews, onApproveReview, onDeleteReview, setRoute }) => {
+        const AdminPanel = ({ leads, reviews, jobApps, onApproveReview, onDeleteReview, setRoute }) => {
             const fmtINR = (n) => {
                 if (n === null || n === undefined || n === '') return '—';
                 const num = Number(n);
@@ -1956,7 +1994,7 @@
                                         ) : (
                                             filteredLeads.map(lead => (
                                                 <tr key={lead.db_id || lead.id || lead.created_at || lead.date} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                                                    <td className="p-4 text-gray-600">{lead.created_at || lead.date}</td>
+                                                    <td className="p-4 text-gray-600">{lead.timestamp ? new Date(lead.timestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : (lead.created_at || lead.date)}</td>
                                                     <td className="p-4">
                                                         <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-1 rounded-full">{lead.tag || 'General Inquiry'}</span>
                                                     </td>
@@ -2036,6 +2074,54 @@
                                                                 Delete
                                                             </button>
                                                         </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Job applications */}
+                        <div className="mt-10 bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
+                            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                                <h3 className="font-semibold text-gray-700">Job Applications ({(jobApps || []).length})</h3>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-white border-b border-gray-100 text-gray-500 text-sm">
+                                            <th className="p-4 font-semibold">Timestamp</th>
+                                            <th className="p-4 font-semibold">Name</th>
+                                            <th className="p-4 font-semibold">Phone</th>
+                                            <th className="p-4 font-semibold">Email</th>
+                                            <th className="p-4 font-semibold">Role</th>
+                                            <th className="p-4 font-semibold">Message</th>
+                                            <th className="p-4 font-semibold">Resume</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {(jobApps || []).length === 0 ? (
+                                            <tr>
+                                                <td colSpan="7" className="p-8 text-center text-gray-400">No job applications yet.</td>
+                                            </tr>
+                                        ) : (
+                                            (jobApps || []).map((a) => (
+                                                <tr key={a.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors align-top">
+                                                    <td className="p-4 text-gray-600 whitespace-nowrap">{a.timestamp ? new Date(a.timestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : '—'}</td>
+                                                    <td className="p-4 font-medium whitespace-nowrap">{a.name}</td>
+                                                    <td className="p-4 whitespace-nowrap">{a.phone}</td>
+                                                    <td className="p-4 whitespace-nowrap">{a.email}</td>
+                                                    <td className="p-4 whitespace-nowrap">{a.role}</td>
+                                                    <td className="p-4 text-gray-700 text-sm max-w-md">{a.message || '—'}</td>
+                                                    <td className="p-4 whitespace-nowrap">
+                                                        <button
+                                                            onClick={() => { window.open(`/api/admin/job-applications/${a.id}/resume`, '_blank'); }}
+                                                            className="px-3 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-semibold"
+                                                        >
+                                                            Download
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             ))
@@ -3525,6 +3611,7 @@
                 { id: 101, name: "Rahul Verma", phone: "9876543210", email: "smartsolarcompanyy@gmail.com", city: "Pune", date: "29/03/2026" }
             ]);
             const [adminReviews, setAdminReviews] = useState([]);
+            const [adminJobApps, setAdminJobApps] = useState([]);
 
             const getPendingLeads = () => {
                 try {
@@ -3606,6 +3693,11 @@
                             .then(r => r.ok ? r.json() : [])
                             .then(data => { if (Array.isArray(data)) setAdminReviews(data); })
                             .catch(() => {});
+
+                        fetch('/api/admin/job-applications', { credentials: 'same-origin' })
+                            .then(r => r.ok ? r.json() : [])
+                            .then(data => { if (Array.isArray(data)) setAdminJobApps(data); })
+                            .catch(() => {});
                     }
                 })();
             }, [route]);
@@ -3627,7 +3719,7 @@
             };
 
             if (route === 'admin') {
-                return <AdminPanel leads={leads} reviews={adminReviews} onApproveReview={approveReview} onDeleteReview={deleteReview} setRoute={setRoute} />;
+                return <AdminPanel leads={leads} reviews={adminReviews} jobApps={adminJobApps} onApproveReview={approveReview} onDeleteReview={deleteReview} setRoute={setRoute} />;
             }
 
             return (
