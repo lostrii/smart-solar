@@ -6,13 +6,14 @@ import json
 import smtplib
 import urllib.request
 import urllib.parse
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from functools import wraps
 
 from flask import Flask, jsonify, redirect, render_template_string, request, send_from_directory, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
+from pymongo import MongoClient, DESCENDING
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -38,36 +39,37 @@ def get_env(name: str) -> str:
     return val
 
 
-def init_db() -> None:
+def init_db(create_leads_table: bool = True) -> None:
     conn = sqlite3.connect(DB_PATH)
     try:
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS leads (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                lead_id INTEGER,
-                name TEXT NOT NULL,
-                phone TEXT NOT NULL,
-                email TEXT,
-                city TEXT NOT NULL,
-                date TEXT NOT NULL,
-                tag TEXT,
-                loan_amount REAL,
-                message TEXT,
-                created_at TEXT NOT NULL DEFAULT (datetime('now'))
-            );
-            """
-        )
+        if create_leads_table:
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS leads (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    lead_id INTEGER,
+                    name TEXT NOT NULL,
+                    phone TEXT NOT NULL,
+                    email TEXT,
+                    city TEXT NOT NULL,
+                    date TEXT NOT NULL,
+                    tag TEXT,
+                    loan_amount REAL,
+                    message TEXT,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+                """
+            )
 
-        # Migration for existing DBs (older schema without loan/tag/message columns).
-        # SQLite doesn't support altering table definitions in-place, so we add missing columns.
-        cols = {row[1] for row in conn.execute("PRAGMA table_info(leads)").fetchall()}
-        if "tag" not in cols:
-            conn.execute("ALTER TABLE leads ADD COLUMN tag TEXT;")
-        if "loan_amount" not in cols:
-            conn.execute("ALTER TABLE leads ADD COLUMN loan_amount REAL;")
-        if "message" not in cols:
-            conn.execute("ALTER TABLE leads ADD COLUMN message TEXT;")
+            # Migration for existing DBs (older schema without loan/tag/message columns).
+            # SQLite doesn't support altering table definitions in-place, so we add missing columns.
+            cols = {row[1] for row in conn.execute("PRAGMA table_info(leads)").fetchall()}
+            if "tag" not in cols:
+                conn.execute("ALTER TABLE leads ADD COLUMN tag TEXT;")
+            if "loan_amount" not in cols:
+                conn.execute("ALTER TABLE leads ADD COLUMN loan_amount REAL;")
+            if "message" not in cols:
+                conn.execute("ALTER TABLE leads ADD COLUMN message TEXT;")
 
         # Tracks failed login attempts to prevent brute-force attacks.
         conn.execute(
@@ -134,7 +136,127 @@ def create_app() -> Flask:
     if not admin_password_hash:
         raise RuntimeError("Set either ADMIN_PASSWORD_HASH or ADMIN_PASSWORD_PLAIN in environment variables.")
 
-    init_db()
+    # Leads storage:
+    # - If MONGO_URI is configured, store leads in MongoDB Atlas collection `leads`
+    # - Otherwise fall back to SQLite (useful for local development)
+    mongo_uri = os.environ.get("MONGO_URI", "").strip()
+    use_mongo = bool(mongo_uri)
+    mongo_client = None
+    leads_collection = None
+
+    if use_mongo:
+        mongo_db_name = os.environ.get("MONGO_DB_NAME", "").strip() or None
+        mongo_client = MongoClient(
+            mongo_uri,
+            serverSelectionTimeoutMS=5000,
+            connectTimeoutMS=5000,
+            socketTimeoutMS=10000,
+            maxPoolSize=int(os.environ.get("MONGO_MAX_POOL_SIZE", "10")),
+        )
+        try:
+            # Verify connection early (better error than failing later during inserts).
+            mongo_client.admin.command("ping")
+        except Exception as e:
+            raise RuntimeError(f"MongoDB connection failed: {e}")
+
+        mongo_db = mongo_client[mongo_db_name] if mongo_db_name else mongo_client.get_default_database()
+        leads_collection = mongo_db["leads"]
+        leads_collection.create_index([("timestamp", DESCENDING)], background=True)
+
+        # Best-effort migration to avoid data loss when switching from the legacy SQLite leads table.
+        # Can be disabled with: MONGO_MIGRATE_FROM_SQLITE=false
+        migrate_from_sqlite = os.environ.get("MONGO_MIGRATE_FROM_SQLITE", "true").lower() == "true"
+        if migrate_from_sqlite:
+            leads_collection.create_index("legacy_sqlite_id", unique=True, sparse=True)
+
+            def migrate_sqlite_leads_to_mongo() -> None:
+                conn = sqlite3.connect(DB_PATH)
+                try:
+                    # If there's no legacy leads table, nothing to migrate.
+                    has_table = conn.execute(
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name='leads' LIMIT 1"
+                    ).fetchone()
+                    if not has_table:
+                        return
+
+                    # Ensure legacy columns exist (older DBs may miss tag/loan/message).
+                    cols = {row[1] for row in conn.execute("PRAGMA table_info(leads)").fetchall()}
+                    if "tag" not in cols:
+                        conn.execute("ALTER TABLE leads ADD COLUMN tag TEXT;")
+                    if "loan_amount" not in cols:
+                        conn.execute("ALTER TABLE leads ADD COLUMN loan_amount REAL;")
+                    if "message" not in cols:
+                        conn.execute("ALTER TABLE leads ADD COLUMN message TEXT;")
+                    conn.commit()
+
+                    rows = conn.execute(
+                        """
+                        SELECT id, lead_id, name, phone, email, city, date, tag, loan_amount, message, created_at
+                        FROM leads
+                        ORDER BY id DESC
+                        """
+                    ).fetchall()
+
+                    for r in rows:
+                        legacy_id = r[0]
+                        lead_id = r[1]
+                        name = r[2]
+                        phone = r[3]
+                        email = r[4]
+                        city = r[5]
+                        date = r[6]
+                        tag = r[7]
+                        loan_amount = r[8]
+                        message = r[9]
+                        created_at_raw = r[10]
+
+                        if created_at_raw:
+                            try:
+                                ts_dt = datetime.strptime(created_at_raw, "%Y-%m-%d %H:%M:%S").replace(
+                                    tzinfo=timezone.utc
+                                )
+                            except Exception:
+                                ts_dt = datetime.now(timezone.utc)
+                        else:
+                            ts_dt = datetime.now(timezone.utc)
+
+                        created_at_str = ts_dt.strftime("%Y-%m-%d %H:%M:%S")
+
+                        doc = {
+                            "name": name,
+                            "phone": phone,
+                            "address": city,
+                            "system_size": None,
+                            "timestamp": ts_dt,
+                            "created_at": created_at_str,
+                            # Compatibility fields:
+                            "email": email,
+                            "city": city,
+                            "date": date,
+                            "tag": tag,
+                            "type": tag,
+                            "loan_amount": loan_amount,
+                            "message": message,
+                            "lead_id": lead_id,
+                            "legacy_sqlite_id": legacy_id,
+                        }
+                        leads_collection.update_one(
+                            {"legacy_sqlite_id": legacy_id},
+                            {"$setOnInsert": doc},
+                            upsert=True,
+                        )
+                finally:
+                    conn.close()
+
+            try:
+                migrate_sqlite_leads_to_mongo()
+            except Exception:
+                # Don't block startup if migration fails; backend can still operate with new submissions.
+                pass
+
+        init_db(create_leads_table=False)
+    else:
+        init_db(create_leads_table=True)
 
     LOGIN_MAX_ATTEMPTS = int(os.environ.get("LOGIN_MAX_ATTEMPTS", "5"))
     LOGIN_WINDOW_SECONDS = int(os.environ.get("LOGIN_WINDOW_SECONDS", "900"))  # 15 minutes
@@ -497,33 +619,72 @@ def create_app() -> Flask:
 
         if not date:
             # Fallback date; UI usually sends date already.
-            from datetime import datetime
-
-            date = datetime.now().strftime("%d/%m/%Y")
+            date = datetime.now(timezone.utc).strftime("%d/%m/%Y")
 
         lead_id = data.get("id")
-        conn = sqlite3.connect(DB_PATH)
-        try:
-            conn.execute(
-                """
-                INSERT INTO leads (lead_id, name, phone, email, city, date, tag, loan_amount, message)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (lead_id, name, phone, email, city, date, submission_type, loan_amount, message),
-            )
-            conn.commit()
+        # Required Mongo fields (also returned in API response for admin compatibility)
+        address = city
+        system_size_raw = data.get("system_size", data.get("systemSize"))
+        system_size = None
+        if system_size_raw is not None and str(system_size_raw).strip() != "":
+            try:
+                system_size = float(system_size_raw)
+            except (TypeError, ValueError):
+                system_size = None
 
-            row_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
-            created_at = conn.execute(
-                "SELECT created_at FROM leads WHERE id = ?",
-                (row_id,),
-            ).fetchone()[0]
-        finally:
-            conn.close()
+        timestamp_dt = datetime.now(timezone.utc)
+        created_at = timestamp_dt.strftime("%Y-%m-%d %H:%M:%S")
+
+        db_id = None
+        if leads_collection is not None:
+            doc = {
+                # Required fields:
+                "name": name,
+                "phone": phone,
+                "address": address,
+                "system_size": system_size,
+                "timestamp": timestamp_dt,
+                # Compatibility fields (existing admin UI):
+                "email": email,
+                "city": city,
+                "date": date,
+                "tag": submission_type,
+                "type": submission_type,
+                "loan_amount": loan_amount,
+                "message": message,
+                "lead_id": lead_id,
+                "created_at": created_at,
+            }
+            try:
+                result = leads_collection.insert_one(doc)
+                db_id = str(result.inserted_id)
+            except Exception as e:
+                return jsonify({"error": "MongoDB insert failed", "details": str(e)}), 503
+        else:
+            # SQLite fallback (local development / if Mongo is not configured)
+            conn = sqlite3.connect(DB_PATH)
+            try:
+                conn.execute(
+                    """
+                    INSERT INTO leads (lead_id, name, phone, email, city, date, tag, loan_amount, message)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (lead_id, name, phone, email, city, date, submission_type, loan_amount, message),
+                )
+                conn.commit()
+
+                row_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+                created_at = conn.execute(
+                    "SELECT created_at FROM leads WHERE id = ?",
+                    (row_id,),
+                ).fetchone()[0]
+                db_id = row_id
+            finally:
+                conn.close()
 
         # Best-effort notifications (never block saving the submission)
         payload = {
-            "db_id": row_id,
+            "db_id": db_id,
             "lead_id": lead_id,
             "name": name,
             "phone": phone,
@@ -535,6 +696,10 @@ def create_app() -> Flask:
             "type": submission_type,
             "loan_amount": loan_amount,
             "message": message,
+            # New required fields:
+            "address": address,
+            "system_size": system_size,
+            "timestamp": timestamp_dt.isoformat(),
         }
 
         email_sent = False
@@ -551,7 +716,7 @@ def create_app() -> Flask:
             jsonify(
                 {
                     "ok": True,
-                    "db_id": row_id,
+                    "db_id": db_id,
                     "created_at": created_at,
                     "tag": submission_type,
                     "loan_amount": loan_amount,
@@ -562,6 +727,10 @@ def create_app() -> Flask:
                     "phone": phone,
                     "date": date,
                     "lead_id": lead_id,
+                    # Required Mongo-style fields (useful for admin/export):
+                    "address": address,
+                    "system_size": system_size,
+                    "timestamp": timestamp_dt.isoformat(),
                     "notifications": {
                         "email_sent": email_sent,
                         "whatsapp_sent": whatsapp_sent,
@@ -582,6 +751,67 @@ def create_app() -> Flask:
             limit = 50
         limit = max(1, min(200, limit))
 
+        if leads_collection is not None:
+            try:
+                docs = list(
+                    leads_collection.find(
+                        {},
+                        {
+                            "_id": 1,
+                            "lead_id": 1,
+                            "name": 1,
+                            "phone": 1,
+                            "email": 1,
+                            "city": 1,
+                            "address": 1,
+                            "date": 1,
+                            "tag": 1,
+                            "type": 1,
+                            "loan_amount": 1,
+                            "message": 1,
+                            "system_size": 1,
+                            "timestamp": 1,
+                            "created_at": 1,
+                        },
+                    )
+                    .sort("timestamp", DESCENDING)
+                    .limit(limit)
+                )
+            except Exception as e:
+                return jsonify({"error": "MongoDB query failed", "details": str(e)}), 503
+
+            leads = []
+            for d in docs:
+                ts = d.get("timestamp")
+                if isinstance(ts, datetime):
+                    ts_iso = ts.isoformat()
+                    created_at_val = d.get("created_at") or ts.strftime("%Y-%m-%d %H:%M:%S")
+                else:
+                    ts_iso = None
+                    created_at_val = d.get("created_at") or d.get("date")
+
+                leads.append(
+                    {
+                        "db_id": str(d.get("_id")),
+                        "id": d.get("lead_id"),
+                        "name": d.get("name"),
+                        "phone": d.get("phone"),
+                        "email": d.get("email"),
+                        "city": d.get("city") or d.get("address"),
+                        "date": d.get("date"),
+                        "tag": d.get("tag") or d.get("type"),
+                        "loan_amount": d.get("loan_amount"),
+                        "message": d.get("message"),
+                        "created_at": created_at_val,
+                        # Required fields:
+                        "address": d.get("address"),
+                        "system_size": d.get("system_size"),
+                        "timestamp": ts_iso,
+                    }
+                )
+            return jsonify(leads)
+
+        # SQLite fallback
         conn = sqlite3.connect(DB_PATH)
         try:
             rows = conn.execute(
@@ -609,6 +839,10 @@ def create_app() -> Flask:
                 "loan_amount": r[8],
                 "message": r[9],
                 "created_at": r[10],
+                # Required fields (mapped):
+                "address": r[5],
+                "system_size": None,
+                "timestamp": None,
             }
             for r in rows
         ]

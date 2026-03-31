@@ -19,6 +19,10 @@ Optional:
   - `LOGIN_WINDOW_SECONDS` (default `900`, 15 minutes)
   - `LOGIN_LOCKOUT_SECONDS` (default `900`, 15 minutes)
   - `LOGIN_FAILURE_DELAY_SECONDS` (default `0.2`)
+- MongoDB Atlas for form submissions:
+  - `MONGO_URI` (required to store leads in MongoDB Atlas)
+  - `MONGO_DB_NAME` (optional; usually comes from your `MONGO_URI`)
+  - `MONGO_MIGRATE_FROM_SQLITE` (optional; default `true`): copies existing `leads.db` records into Mongo on startup
 - Notifications (instant alerts):
   - `NOTIFY_TYPES` (default `General Inquiry,Loan Request`)
   - **WhatsApp (Meta Cloud API, recommended)**:
@@ -100,6 +104,9 @@ This repo includes a `render.yaml` that configures:
   - `SESSION_SECRET`
   - `ADMIN_USERNAME`
   - `ADMIN_PASSWORD_HASH` (preferred) or `ADMIN_PASSWORD_PLAIN`
+  - `MONGO_URI` (required for storing leads in MongoDB)
+
+- After that, your backend will write every submitted form into MongoDB collection `leads`.
   - (Optional notifications): `META_WA_*`, SMTP vars, etc.
 
 ### After deploy
