@@ -163,9 +163,8 @@
                                 <a href="#" onClick={(e) => navAction(e, 'about')} className="text-gray-600 hover:text-primary font-medium transition-colors">About Us</a>
                             </nav>
 
-                            {/* Desktop CTA + Admin */}
+                            {/* Desktop CTA */}
                             <div className="hidden md:flex items-center space-x-4">
-                                <button onClick={() => { window.location.href = '/admin'; }} className="text-sm text-gray-400 hover:text-gray-600">Admin</button>
                                 <a href="#contact" onClick={(e) => { e.preventDefault(); setRoute('home'); setTimeout(() => { document.getElementById('contact').scrollIntoView({behavior: 'smooth'}); }, 100); }} className="bg-primary hover:bg-orange-600 text-white px-6 py-2.5 rounded-full font-medium transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                                     Get Consultation
                                 </a>
@@ -257,8 +256,6 @@
                                 className="block w-full text-center bg-primary hover:bg-orange-600 text-white px-6 py-3.5 rounded-xl font-bold transition-all shadow-lg">
                                 📞 Get Free Consultation
                             </a>
-                            <a href="#" onClick={(e) => { e.preventDefault(); setMobileOpen(false); window.location.href = '/admin'; }}
-                                className="block w-full text-center text-xs text-gray-400 hover:text-gray-600 py-2 transition-colors">Admin</a>
                         </div>
                     )}
                 </header>

@@ -294,21 +294,30 @@ def create_app() -> Flask:
             return False
 
         port = int(os.environ.get("SMTP_PORT", "587"))
+        # TLS is expected for port 587; keep configurable but default to true.
         use_tls = os.environ.get("SMTP_TLS", "true").lower() == "true"
 
         msg = EmailMessage()
         msg["Subject"] = os.environ.get("SMTP_SUBJECT_PREFIX", "[Smart Solar] ") + "New submission"
         msg["From"] = from_addr
         msg["To"] = to_addr
+
+        system_size = payload.get("system_size")
+        if system_size is None or system_size == "":
+            system_size_str = "—"
+        else:
+            system_size_str = str(system_size)
+
         msg.set_content(
             "\\n".join(
                 [
                     build_notification_text(payload),
                     "",
-                    f"Email: {(payload.get('email') or '—')}",
-                    f"City: {(payload.get('city') or '—')}",
+                    f"Name: {(payload.get('name') or '—')}",
+                    f"Phone: {(payload.get('phone') or '—')}",
+                    f"City: {(payload.get('city') or payload.get('address') or '—')}",
+                    f"System Size: {system_size_str}",
                     f"Message: {(payload.get('message') or '—')}",
-                    f"Timestamp: {(payload.get('created_at') or payload.get('date') or '—')}",
                 ]
             )
         )
@@ -485,8 +494,22 @@ def create_app() -> Flask:
     def require_admin(view):
         @wraps(view)
         def wrapped(*args, **kwargs):
+            # Optional IP allowlist
+            allowed_ip = (os.environ.get("ADMIN_IP") or "").strip()
+            if allowed_ip:
+                ip = get_client_ip()
+                if ip != allowed_ip:
+                    return jsonify({"error": "forbidden"}), 403 if request.path.startswith("/api/") else ("Forbidden", 403)
+
             if not session.get("admin_authed"):
                 # For API endpoints we return 401; for pages we redirect.
+                if request.path.startswith("/api/"):
+                    return jsonify({"error": "unauthorized"}), 401
+                return redirect(url_for("login"))
+
+            # Role check: ensure session username matches current ADMIN_USERNAME
+            if session.get("admin_username") != admin_username:
+                session.clear()
                 if request.path.startswith("/api/"):
                     return jsonify({"error": "unauthorized"}), 401
                 return redirect(url_for("login"))
@@ -588,6 +611,7 @@ def create_app() -> Flask:
 
         session.clear()
         session["admin_authed"] = True
+        session["admin_username"] = username
         session.permanent = True
 
         return redirect(url_for("admin"))
@@ -718,9 +742,11 @@ def create_app() -> Flask:
         email_sent = False
         whatsapp_sent = False
         whatsapp_fallback_url = None
+        # Email: send on every submission (if SMTP is configured).
+        email_sent = notify_email_smtp(payload)
+
+        # WhatsApp: keep optional + type-filtered behavior.
         if not NOTIFY_TYPES or submission_type in NOTIFY_TYPES:
-            email_sent = notify_email_smtp(payload)
-            # Prefer Meta Cloud API if configured; fallback to Twilio if configured.
             whatsapp_sent = notify_whatsapp_meta(payload) or notify_whatsapp_twilio(payload)
             if not whatsapp_sent:
                 whatsapp_fallback_url = build_whatsapp_wa_me_fallback(payload)
