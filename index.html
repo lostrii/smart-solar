@@ -831,7 +831,30 @@
 
                     setLocation(label);
                 } catch (e) {
-                    setLocError('Could not detect location. Please type your city manually.');
+                    // If GPS is blocked/denied, fall back to approximate IP-based city lookup.
+                    // (Less accurate than GPS, but works reliably without permission.)
+                    try {
+                        const msg = (e && e.message) ? String(e.message) : '';
+                        // Standard geolocation errors often include "User denied Geolocation".
+                        if (msg.toLowerCase().includes('denied')) {
+                            setLocError('Location permission denied. Using approximate location...');
+                        }
+
+                        const ipRes = await fetch('https://ipapi.co/json/', { headers: { 'Accept': 'application/json' } });
+                        if (!ipRes.ok) throw new Error('ip lookup failed');
+                        const ipData = await ipRes.json();
+                        const city = ipData.city || '';
+                        const region = ipData.region || ipData.region_code || '';
+                        const label = [city, region].filter(Boolean).join(', ');
+                        if (label) {
+                            setLocation(label);
+                            setLocError('');
+                        } else {
+                            setLocError('Could not detect location automatically. Please type your city manually.');
+                        }
+                    } catch {
+                        setLocError('Could not detect location automatically. Please type your city manually.');
+                    }
                 } finally {
                     setIsLocating(false);
                 }
